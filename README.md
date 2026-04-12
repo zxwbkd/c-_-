@@ -1,8 +1,14 @@
+<<<<<<< HEAD
 C-Library-Management-System 
 基于 C 语言链表实现的轻量级图书管理系统。本项目旨在记录从基础数据结构应用到解决实际业务逻辑问题的开发全过程。
 
 🚀 核心技术栈
 语言：C (GCC 编译器)
+=======
+C-Library-Management-System 基于 C 语言链表实现的轻量级图书管理系统。本项目旨在记录从基础数据结构应用到解决实际业务逻辑问题的开发全过程。
+
+🚀 核心技术栈 语言：C (GCC 编译器)
+>>>>>>> d52b6d3 (feat: complete v1.0 Book Management System with stock limit and UX optimization)
 
 数据结构：单链表 (动态内存分配 malloc/free)
 
@@ -10,6 +16,7 @@ C-Library-Management-System
 
 开发环境：VSCode + CMake (跨平台构建支持)
 
+<<<<<<< HEAD
 🛠️ 重要更新与逻辑重构
 在开发过程中，我针对最初版本的局限性进行了多次关键迭代：
 
@@ -21,12 +28,21 @@ C-Library-Management-System
 2. 查找功能与模块解耦 (多维度检索)
 功能更新：将单一的书名查找重构为通用的 searchBook 函数。
 
+=======
+🛠️ 重要更新与逻辑重构 在开发过程中，我针对最初版本的局限性进行了多次关键迭代：
+
+界面排版美化 (格式化输出) 问题：使用 \t 制表符导致长书名（如 "Data_Analysis"）显示时无法对齐，界面凌乱。
+解决：弃用 \t，改用 printf 的固定宽度格式化输出（如 %-20s），确保无论字符长短，表格始终整齐。
+
+查找功能与模块解耦 (多维度检索) 功能更新：将单一的书名查找重构为通用的 searchBook 函数。
+>>>>>>> d52b6d3 (feat: complete v1.0 Book Management System with stock limit and UX optimization)
 逻辑修改：
 
 引入 type 参数，支持书名、作者、书号三种模式检索。
 
 将借阅（Case 3）和归还（Case 4）模块的底层逻辑全部接入该函数，极大提高了代码复用性。
 
+<<<<<<< HEAD
 3. 库存逻辑漏洞修复 (边界检查)
 问题发现：初始版本未记录“总馆藏量”，导致用户归还书籍时可以无限增加库存，不符合现实逻辑。
 
@@ -46,3 +62,12 @@ C-Library-Management-System
 改进后：将排序功能内嵌至浏览模块。用户在点击“浏览”时，系统会主动询问是否需要排序。
 
 意义：减少了主菜单的层级，符合“所见即所得”的设计原则，提升了操作效率。
+=======
+库存逻辑漏洞修复 (边界检查) 问题发现：初始版本未记录“总馆藏量”，导致用户归还书籍时可以无限增加库存，不符合现实逻辑。
+深度修复： 在结构体中新增 totalCount 字段。
+
+防御式编程：在归还模块加入判断：if (currentCount < totalCount)，只有未达到上限才允许归还。
+
+严谨的返回值设计 (NULL 指针保护) 逻辑优化：在查找函数结尾强制执行 return NULL;。
+作用：作为查找失败的“信号”，配合调用端的 if (result == NULL) 判断，有效防止了程序因访问野指针而崩溃。
+>>>>>>> d52b6d3 (feat: complete v1.0 Book Management System with stock limit and UX optimization)

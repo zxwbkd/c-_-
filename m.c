@@ -9,6 +9,7 @@ struct Bookinformation
     char bookId[20];     // 书号
     float price;         // 价格 
     int count;           // 库存
+    int totalCount;      // 总库存
 };
 
 //用链表处理数据
@@ -78,14 +79,28 @@ void deleteNodeByBookName(struct Node* headNode,  char  *bookName)
     }
 }
 
-struct Bookinformation searchBookByBookName(struct Node*  headNode,char *bookName)
+struct Node* searchBook (struct Node*  headNode,char* key ,int type)   //根据书名、作者、书号等信息查找书籍
 {
     struct Node* posNode = headNode->next;
-    while(posNode != NULL&& strcmp(posNode->data.bookName, bookName))
+    while(posNode != NULL)
     {
+        int isMatch = 0;
+        switch (type)
+        {
+            case 1:     //按照书名查找
+                if (strcmp(posNode->data.bookName, key) == 0) isMatch = 1;
+                break;
+            case 2:     //按照作者查找
+                if (strcmp(posNode->data.author, key) == 0) isMatch = 1;
+                break;
+            case 3:     //按照书号查找
+                if (strcmp(posNode->data.bookId, key) == 0) isMatch = 1;
+                break;
+        }
+        if (isMatch) return posNode;   //如果找到匹配的节点，直接返回该节点的指针
         posNode = posNode->next;
     }
-    return posNode;
+    return NULL;   //如果遍历完整个链表都没有找到匹配的节点，返回NULL
 }
 
 
@@ -93,10 +108,10 @@ struct Bookinformation searchBookByBookName(struct Node*  headNode,char *bookNam
 void printList(struct Node* headNode)   //遍历链表并打印每个有效节点的数据
 {
     struct Node* pMove = headNode->next;     //定义一个指针变量pMove，指向链表的第一个节点（即headNode的下一个节点）
-    printf("书名\t作者\t书号\t价格\t库存\n");
+    printf("%-20s %-15s %-10s %-10s %-8s\n", "书名", "作者", "书号", "价格", "库存");
     while(pMove != NULL)
     {
-        printf("%s\t%s\t%s\t%.2f\t%d\n", pMove->data.bookName, pMove->data.author, pMove->data.bookId, pMove->data.price, pMove->data.count);
+        printf("%-20s %-15s %-10s %-10.2f %-8d\n", pMove->data.bookName, pMove->data.author, pMove->data.bookId, pMove->data.price, pMove->data.count);
         pMove = pMove->next;
     }
 }
@@ -111,11 +126,10 @@ void makeMenu()
     printf("\t2.浏览书籍\n");
     printf("\t3.借阅书籍\n");
     printf("\t4.归还书籍\n");
-    printf("\t5.书籍排序\n");
-    printf("\t6.删除书籍\n");
-    printf("\t7.查找书籍\n");
+    printf("\t5.删除书籍\n");
+    printf("\t6.查找书籍\n");
     printf("--------------------------------------------------\n");
-    printf("请输入(0~7):");
+    printf("请输入(0~6):");
 }
 //文件存储操作
 //参数：fileName是文件名，headNode是链表的头指针
@@ -125,7 +139,7 @@ void saveInfoToFile(const char *fileName, struct Node* headNode)
     struct Node* pMove = headNode->next;    
     while(pMove != NULL)              ////pMove从链表的第一个节点开始，依次遍历链表，将每个节点的数据写入文件中
     {
-        fprintf(fp, "%s %s %s %.2f %d\n", pMove->data.bookName, pMove->data.author, pMove->data.bookId, pMove->data.price, pMove->data.count);
+        fprintf(fp, "%s %s %s %.2f %d %d\n", pMove->data.bookName, pMove->data.author, pMove->data.bookId, pMove->data.price, pMove->data.count, pMove->data.totalCount);
         pMove = pMove->next;
     }
     fclose(fp);   //关闭文件
@@ -140,20 +154,40 @@ void readInfoFromFile(const char *fileName, struct Node* headNode)
         fp = fopen(fileName, "w+");     //如果文件不存在，则创建一个新的文件
     }
     struct Bookinformation tempData;
-    while (fscanf(fp, "%s %s %s %f %d", tempData.bookName, tempData.author, tempData.bookId, &tempData.price, &tempData.count) != EOF)   //循环读取文件中的数据，直到文件末尾（EOF）为止
+    while (fscanf(fp, "%s %s %s %f %d %d", tempData.bookName, tempData.author, tempData.bookId, &tempData.price, &tempData.count, &tempData.totalCount) != EOF)   //循环读取文件中的数据，直到文件末尾（EOF）为止
     {
         insertNodeByHead(headNode, tempData);     //将读取到的数据插入到链表中
     }
     fclose(fp);   //关闭文件
 }
 
-void bubbleSortList(struct Node* headNode)
+void bubbleSortList(struct Node* headNode , int type)
 {
     for (struct Node*p = headNode->next; p != NULL; p = p->next)
     {
-        for (struct Node*q = headNode->next; q != NULL; q = q->next)
-        {
-            if (q->data.price > p->data.price)      //按照价格从小到大排序
+        for (struct Node*q = p->next; q != NULL; q = q->next)
+        {   
+            int shouldSwap = 0;
+            switch (type)
+            {
+                case 1:     //按照价格从小到大排序
+                    if (p->data.price > q->data.price) shouldSwap = 1;
+                    break;
+                case 2:     //按照数量从小到大排序
+                    if (p->data.count > q->data.count) shouldSwap = 1;
+                    break;
+                case 3:     //按照书号排序
+                    if (strcmp(p->data.bookId, q->data.bookId) > 0) shouldSwap = 1;
+                    break;
+                case 4:     //按照书名排序
+                    shouldSwap = strcmp(p->data.bookName, q->data.bookName) > 0;
+                    break;
+                case 5:     //按照作者排序
+                    shouldSwap = strcmp(p->data.author, q->data.author) > 0;
+                    break;
+
+            }
+            if (shouldSwap)
             {
                 //交换数据
                 struct Bookinformation tempData = p->data;
@@ -170,32 +204,62 @@ void  KeyDown()
 {
     int userKey = 0;
     struct Bookinformation tempBook;           //定义一个临时变量存储书籍信息
-    struct Node*  result ==NULL;              //定义一个指针变量存储查找结果
+    struct Node*  result =NULL;              //定义一个指针变量存储查找结果
+    char key[40];                           //定义一个字符数组存储用户输入的关键字
+
     scanf("%d", &userKey);
     switch (userKey)
     {
+        
     case 0:
         printf("【 退出 】\n");
         printf("退出成功\n");
         system("pause");
         exit(0);                    //关闭程序
         break;
+
     case 1:
         printf("【 登记 】\n");
-        printf("请输入书籍信息：书名 作者 书号 价格 库存: ");
-        scanf("%s %s %s %f %d", tempBook.bookName, tempBook.author, tempBook.bookId, &tempBook.price, &tempBook.count);   //从用户输入中读取书籍信息，并将其存储在tempBook变量中
+        printf("请输入书籍信息：书名 作者 书号 价格 总库存: ");
+        scanf("%s %s %s %f %d", tempBook.bookName, tempBook.author, tempBook.bookId, &tempBook.price, &tempBook.totalCount);   //从用户输入中读取书籍信息，并将其存储在tempBook变量中
         insertNodeByHead(list, tempBook);     //调用insertNodeByHead函数将tempBook插入到链表中
         saveInfoToFile("book.txt", list);     //修改完链表后，用saveInfoToFile函数将链表中的数据保存到文件中
         break;
     case 2:
         printf("【 浏览 】\n");
-        printList(list);
+        printf("是否需要排序？ 1.需要 2.不需要\n");
+        int choice;     //定义一个变量choice来存储用户选择是否需要排序
+        scanf("%d", &choice);
+        if (choice == 1)
+        {
+            printf("请选择排序方式: 1.价格 2.数量 3.书号 4.书名 5.作者\n");
+            int sortType;     //定义一个变量sortType来存储用户选择的排序方式
+            scanf("%d", &sortType);
+            if (sortType >= 1 && sortType <= 5)
+            {
+                bubbleSortList(list, sortType);     //调用bubbleSortList函数对链表进行排序，并将排序结果打印出来
+            }
+            else 
+            {
+            printf("输入错误，将按照默认顺序浏览\n");
+            printList(list);
+            }
+        }
+        else 
+        {
+            printList(list);
+        }
         break;
     case 3:
         printf("【 借阅 】\n");
-        printf("请输入要借阅的书名：");
-        scanf("%s", tempBook.bookName);   //从用户输入中读取要借阅的书籍名称，并将其存储在tempBook变量的bookName字段中
-        result = searchBookByBookName(list, tempBook.bookName);     //调用searchBookByBookName函数查找指定书籍，并将结果存储在result变量中
+        printf("请选择借阅方式: 1.书名 2.作者 3.书号\n");
+        int borrowType;     //定义一个变量borrowType来存储用户选择的借阅方式
+        scanf("%d", &borrowType);
+
+        printf("请输入要借阅的书籍关键词：");
+        scanf("%s", key);   //从用户输入中读取要借阅的书籍关键词，并将其存储在key数组中
+
+        result = searchBook(list, key, borrowType);     //调用searchBook函数查找指定书籍，并将结果存储在result变量中
         if (result == NULL)
         {
             printf("相关书籍无法借阅\n");
@@ -205,7 +269,7 @@ void  KeyDown()
             if(result->data.count > 0 )
             {
                 result->data.count--;
-                printf("借阅成功\n");
+                printf("借阅成功!当前库存: %d\n", result->data.count);
                 saveInfoToFile("book.txt", list);     //修改完链表后，用saveInfoToFile函数将链表中的数据保存到文件中
             }
             else
@@ -216,44 +280,58 @@ void  KeyDown()
         break;
     case 4:
         printf("【 归还 】\n");
-        printf("请输入要归还的书名：");
-        scanf("%s", tempBook.bookName);   //从用户输入中读取要归还的书籍名称，并将其存储在tempBook变量的bookName字段中
-        result = searchBookByBookName(list, tempBook.bookName);     //调用searchBookByBookName函数查找指定书籍，并将结果存储在result变量中
+        printf("请选择归还方式: 1.书名 2.作者 3.书号\n:");
+        int returnType;     //定义一个变量returnType来存储用户选择的归还方式
+        scanf("%d", &returnType);
+
+        printf("请输入要归还的书籍关键词：");
+        scanf("%s", key);   //从用户输入中读取要归还的书籍关键词，并将其存储在key数组中
+
+        result = searchBook(list, key, returnType);     //调用searchBook函数查找指定书籍，并将结果存储在result变量中
         if (result == NULL)
         {
-            printf("该书来源异常\n");
+            printf("该书来源异常(未找到登记信息)\n");
         }
         else 
-        {
-            result->data.count++;
-            printf("归还成功\n");
-            saveInfoToFile("book.txt", list);     //修改完链表后，用saveInfoToFile函数将链表中的数据保存到文件中
+        {   
+            if(result->data.count < result->data.totalCount)
+            {
+                result->data.count++;
+                printf("归还成功！当前库存: %d\n", result->data.count);
+                saveInfoToFile("book.txt", list);     //修改完链表后，用saveInfoToFile函数将链表中的数据保存到文件中
+            }
+            else
+            {
+                printf("归还失败！该书籍已全部归还\n");
+            }
         }
         break;
     case 5:
-        printf("【 排序 】\n");
-        bubbleSortList(list);
-        break;
-    case 6:
         printf("【 删除 】\n");
         printf("请输入要删除的书名：");
         scanf("%s", tempBook.bookName);   //从用户输入中读取要删除的书籍名称，并将其存储在tempBook变量的bookName字段中
+        
         deleteNodeByBookName(list, tempBook.bookName);     //调用deleteNodeByBookName函数删除指定书籍
         saveInfoToFile("book.txt", list);     //删除后保存到文件
         break;
-    case 7:
+    case 6:
         printf("【 查找 】\n");
-        printf("请输入要查找的书名：");
-        scanf("%s", tempBook.bookName);   //从用户输入中读取要查找的书籍名称，并将其存储在tempBook变量的bookName字段中
-        result = searchBookByBookName(list, tempBook.bookName);     //调用searchBookByBookName函数查找指定书籍，并将结果存储在result变量中
+        printf("请选择查找方式: 1.书名 2.作者 3.书号\n");
+
+        int searchType;     //定义一个变量searchType来存储用户选择的查找方式
+        scanf("%d", &searchType);
+
+        printf("请输入要查找书籍的关键字：");
+        scanf("%s", key);   //从用户输入中读取要查找的关键字，并将其存储在key数组中
+        result = searchBook(list, key, searchType);     //调用searchBook函数查找指定书籍，并将结果存储在result变量中
         if (result == NULL)
         {
             printf("未找到相关信息！\n");
         }
         else
         {
-            printf("书名\t作者\t书号\t价格\t库存\n");
-            printf("%s\t%s\t%s\t%.2f\t%d\n", result->data.bookName, result->data.author, result->data.bookId, result->data.price, result->data.count);
+            printf("%-20s %-15s %-10s %-10s %-8s\n", "书名", "作者", "书号", "价格", "库存");
+            printf("%-20s %-15s %-10s %-10.2f %-8d\n", result->data.bookName, result->data.author, result->data.bookId, result->data.price, result->data.count);
         }
         break;
     default:
